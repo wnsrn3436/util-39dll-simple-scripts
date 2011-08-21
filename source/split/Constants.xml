@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<constants>
+  <constant name="simple_string" value="5"/>
+  <constant name="simple_uint" value="4"/>
+  <constant name="simple_int" value="3"/>
+  <constant name="simple_ushort" value="2"/>
+  <constant name="simple_short" value="1"/>
+  <constant name="simple_byte" value="0"/>
+</constants>

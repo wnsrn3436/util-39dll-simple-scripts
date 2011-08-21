@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<resources>
+  <resource name="sk_space_message_check" type="RESOURCE"/>
+  <resource name="sk_space_message_save" type="RESOURCE"/>
+  <resource name="sk_set_space_event" type="RESOURCE"/>
+</resources>
