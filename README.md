@@ -1,6 +1,8 @@
 # 39DLL SimpleScripts
 
-A networking script library for GameMaker 8. It wraps the socket functions of 39DLL into 31 `sk_` scripts that cover hosting a server, joining it, managing players, and sending and receiving messages. The goal was to let people build multiplayer games without touching socket buffers themselves. It shipped as a script resource file with a script reference and five examples that build up from connecting to a small game.
+[한국어](README.ko.md)
+
+A networking script library for GameMaker 8. It wraps the socket functions of 39DLL into 31 `sk_` scripts that cover hosting a server, joining it, managing players, and sending and receiving messages. The goal was to let people build multiplayer games without touching socket buffers themselves. It shipped as a script resource file and a script reference bundled with five examples that start with connecting and work up to a simple game.
 
 <p>
   <img src="docs/screenshots/screenshot-1.png" width="306" alt="Waiting room of the example">
@@ -19,7 +21,7 @@ if sk_socket_make("Host") { ... }        // open a server
 if sk_socket_join("Joiner", 1) { ... }   // join, wait 1 second for a reply
 ```
 
-Messages are collected and sent in one go. The message id is a number your game defines. The recipient is a player id, or one of `0` (host), `-1` (everyone but me), `-2` (everyone including me).
+Messages are collected and sent in one go. The message id is a number your game defines. Besides a player id, the recipient can be `0` (host), `-1` (everyone but me), or `-2` (everyone including me).
 
 ```gml
 sk_message_save(1, -1)                    // message id 1, to everyone but me
@@ -28,7 +30,7 @@ sk_message_sadd(simple_string, 1, name)   // one string
 sk_message_send()
 ```
 
-The receiving side runs `sk_message_check` in a Step event and branches on the message id. Values are read by type and position, and the position counts from 0 separately for each type.
+The receiving side runs `sk_message_check` in a Step event and branches on the message id. Variables are read by type and position, and positions are counted from 0 separately for each type.
 
 ```gml
 while(sk_message_check())
@@ -42,16 +44,16 @@ while(sk_message_check())
 }
 ```
 
-There are also space messages, which are exchanged per instance. Each instance gets its own space number. Sending with `sk_space_message_save(id, recipient, object, space)` fires a User Defined event on the receiving instances. There, `sk_space_message_check(space)` tells whether the message is for this instance, and the rest is read like a normal message.
+There are also space messages, which are exchanged per instance. When you give each instance its own space number and send with `sk_space_message_save(id, recipient, object, space)`, the User Defined event of the receiving instances is called. In that event, `sk_space_message_check(space)` checks whether the message is for this instance, and the rest is read like a normal message.
 
 The full script list and argument descriptions are in [docs/reference.md](docs/reference.md).
 
 
 ## How it works
 
-**A star layout with the server relaying.** The side that opens the server gets player id 0. A client that connects receives the socket number the server got from accept, and uses that as its player id. Clients never connect to each other. Every message goes through the server, which looks at the recipient value and decides whether to handle it itself, pass it to one client, or spread it to everyone.
+**A star layout with the server relaying.** The side that opens the server gets player id 0. A client that connects gets the socket number from the server's accept as its player id, unchanged. Clients never connect to each other directly, and every message goes through the server. The server looks at the recipient value of each message it receives and decides whether to handle it itself, pass it to one client, or broadcast it to everyone.
 
-**Serialization uses one buffer per type.** A packet starts with a header of recipient, kind, message id, sender id, and sender name. Then come the counts for the six types (byte, short, ushort, int, uint, string), and then the values in type order. `sk_message_sadd` only stacks values into six temporary buffers, one per type, and `sk_message_send` joins them into one packet. The receiver reads each type by its count into a 2D array indexed by `[position, type]`, which is why values are fetched by type and position.
+**Serialization uses one buffer per type.** A packet starts with a header of recipient, kind, message id, sender id, and sender name. Then come the counts for the six types (byte, short, ushort, int, uint, string), and then the values in type order. `sk_message_sadd` only accumulates values in six temporary buffers, one per type, and `sk_message_send` joins them into one packet. The receiver reads as many values of each type as its count says into a 2D array indexed by `[position, type]`, which is why values are fetched by type and position.
 
 ```gml
 // sk_message_sadd: stack into the buffer of that type
@@ -62,11 +64,11 @@ global._39_message_st_max_[1]=dll39_read_uint(global._39_saved_buffer_)
 for(__i=0; __i!=global._39_message_st_max_[1]; __i+=1){global._39_message_st_sts_[__i, 1]=dll39_read_short(global._39_saved_buffer_)}
 ```
 
-**Messages are queued before sending.** `sk_message_save` sends nothing. It only adds an entry to a list. `sk_message_send` walks the list building packets, and when the sender is itself one of the recipients, the packet is copied straight into its own receive buffer without going over the network. That is how a host sending to the host runs through the same code.
+**Messages are queued before sending.** `sk_message_save` only adds an entry to a list. `sk_message_send` walks the list building packets, and when the sender is itself one of the recipients, the packet is copied straight into its own receive buffer without going over the network. So a message the host sends to itself goes through the same code.
 
-**Space messages are delivered through events.** When `sk_message_check` meets a space message, it raises a User Defined event on every instance of the target object. Each instance calls `sk_space_message_check` to see whether the space is its own, and once a match is found the remaining instances are skipped. This was made so many instances could split up incoming messages efficiently.
+**Space messages are delivered through events.** When `sk_message_check` comes across a space message, it raises a User Defined event on every instance of the target object. Each instance calls `sk_space_message_check` to see whether the space is its own, and once a match is found the remaining instances are skipped. The design is meant to split incoming messages efficiently when there are many instances.
 
-**Extras.** Setting a password wraps every packet with 39DLL's buffer encryption. Setting a send limit pauses for a moment after a given number of packets, which keeps packets from breaking when the server has little upload bandwidth. When a client's connection drops, the server closes that socket and pushes the player id into a queue that `sk_get_sleep_player_id` reads.
+**Extras.** Setting a password wraps packets with 39DLL's buffer encryption before they are sent. Setting a send limit pauses for a moment every time a given number of packets has been sent, which keeps packets from breaking on a server with little upload bandwidth. When a client's connection drops, the server closes that socket and puts the player id into a queue, so you can check it with `sk_get_sleep_player_id`.
 
 
 ## Files
@@ -83,7 +85,7 @@ for(__i=0; __i!=global._39_message_st_max_[1]; __i+=1){global._39_message_st_sts
 
 ## Credits
 
-39DLL is a widely used file and networking DLL for GameMaker, made by 39ster.
+39DLL is a file and networking DLL by 39ster that was widely used in the GameMaker community.
 
 
 ## License

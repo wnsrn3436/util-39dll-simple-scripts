@@ -5,7 +5,7 @@
 ## 연결
 
 - `sk_set_39dll(ip, port)` : 접속할 IP 와 포트를 정한다. 다른 스크립트보다 먼저 호출해야 한다. `ip` 는 `"127.0.0.1"` 같은 문자열이고, `port` 는 65535 까지의 정수다.
-- `sk_socket_make(name)` : 새 서버를 연다. `name` 은 자신의 플레이어 이름이다. 방장의 플레이어 id 는 0 이다. 같은 포트에 이미 서버가 있으면 `false` 를 돌려준다.
+- `sk_socket_make(name)` : 새 서버를 연다. `name` 은 자신의 플레이어 이름이고 방장의 플레이어 id 는 0 이다. 같은 포트에 이미 서버가 있으면 `false` 를 돌려준다.
 - `sk_socket_join(name, seconds)` : `sk_set_39dll` 로 정한 서버에 참가한다. `name` 은 자신의 플레이어 이름이고, `seconds` 는 서버의 응답을 기다리는 시간(초)이다. 서버가 닫혀 있거나 시간 안에 응답하지 않으면 `false` 를 돌려준다.
 - `sk_socket_close(seconds)` : 서버와의 연결을 끊는다. `seconds` 는 퇴장 메시지가 전송되기를 기다리는 시간(초)이다. 다시 참가하려면 `sk_set_39dll` 부터 다시 호출해야 한다.
 - `sk_socket_player_close(player)` : 지정한 플레이어의 연결을 끊는다. 서버에서만 사용할 수 있다.
@@ -15,7 +15,7 @@
 
 메시지는 모아 두었다가 `sk_message_send` 로 한 번에 보낸다. 받을 플레이어는 플레이어 id 외에 `0`(방장), `-1`(나를 뺀 모두), `-2`(나를 포함한 모두)를 쓸 수 있다.
 
-- `sk_message_save(id, player)` : 메시지 id 인 메시지를 `player` 에게 보내도록 모아 둔다. `id` 는 게임에서 정하는 번호다. 여러 번 호출할 수 있다.
+- `sk_message_save(id, player)` : `player` 에게 보낼 메시지를 모아 둔다. `id` 는 메시지 id 이며 게임에서 정하는 번호다. 여러 번 호출할 수 있다.
 - `sk_message_sadd(type, count, value1, value2, ...)` : 마지막으로 모아 둔 메시지에 변수를 붙인다. `type` 은 아래 패킷 형식이고 `count` 는 뒤에 오는 변수의 개수다. 여러 번 호출할 수 있다.
 - `sk_message_send()` : 모아 둔 메시지를 전부 보낸다.
 - `sk_get_save_message_max()` : 모아 둔 메시지의 개수를 돌려준다.
@@ -42,8 +42,8 @@
 
 공간 메시지는 특정 인스턴스에게 보내는 메시지다. 인스턴스마다 서로 다른 공간 번호를 두고, 받는 인스턴스의 User Defined 이벤트에서 `sk_space_message_check` 로 자기 것인지 확인한다.
 
-- `sk_space_message_save(id, player, object, space)` : `object` 의 인스턴스 중 공간 번호가 `space` 인 인스턴스에게 보낼 메시지를 모아 둔다. 변수는 `sk_message_sadd` 로 붙인다.
-- `sk_set_space_event(number)` : 공간 메시지가 도착했을 때 실행할 User Defined 이벤트 번호를 정한다. 모든 인스턴스에 같이 적용된다. 기본값은 0 이다.
+- `sk_space_message_save(id, player, object, space)` : 메시지를 모아 두는데 받는 쪽은 `object` 의 인스턴스 중 공간 번호가 `space` 인 인스턴스다. 변수는 `sk_message_sadd` 로 붙인다.
+- `sk_set_space_event(number)` : 공간 메시지가 도착했을 때 실행할 User Defined 이벤트 번호를 정한다. 모든 인스턴스에 같이 적용되고 기본값은 0 이다.
 - `sk_space_message_check(space)` : User Defined 이벤트 안에서 호출한다. 도착한 공간 메시지가 `space` 에게 온 것이면 `true` 를 돌려준다. 변수는 일반 메시지와 같은 방법으로 읽는다. `while` 로 감싸지 않는다.
 
 ## 플레이어
@@ -53,11 +53,11 @@
 - `sk_get_my_player_name()` : 자신의 플레이어 이름을 돌려준다.
 - `sk_get_my_ip(kind)` : 자신의 IP 를 돌려준다. `kind` 가 0 이면 외부 IP, 1 이면 내부 IP 다. 외부 IP 는 whatismyip.org 에 물어보는 방식이라 지금은 동작하지 않을 수 있다.
 - `sk_get_server_ip()` : 서버의 IP 를 돌려준다.
-- `sk_set_player_accept(accept)` : 새 플레이어를 받아들일지 정한다. `false` 면 접속 자체를 막는다. 다시 열 때 성공하면 `true` 를 돌려준다. 서버에서만 사용할 수 있다.
+- `sk_set_player_accept(accept)` : 새 플레이어를 받아들일지 정한다. `false` 면 접속 자체를 막고 다시 열 때 성공하면 `true` 를 돌려준다. 서버에서만 사용할 수 있다.
 - `sk_set_player_accept_max(max)` : 서버에 접속할 수 있는 플레이어 수의 상한을 정한다. 0 이면 제한하지 않으며 기본값이다. 서버에서만 사용할 수 있다.
 - `sk_get_player_max_number()` : 지금까지 서버에 들어온 플레이어 수를 돌려준다. 서버에서만 사용할 수 있다.
 - `sk_get_player_number()` : 현재 서버에 있는 플레이어 수를 돌려준다. 서버에서만 사용할 수 있다.
-- `sk_get_sleep_player_id()` : 연결이 끊긴 플레이어의 id 를 하나씩 돌려준다. 없으면 0 을 돌려주므로 0 이 아닌 동안 반복해서 호출한다. `sk_message_check` 뒤에 호출해야 한다. 서버에서만 사용할 수 있다.
+- `sk_get_sleep_player_id()` : 연결이 끊긴 플레이어의 id 를 하나씩 돌려준다. 없으면 0 이므로 0 이 아닌 동안 반복해서 호출한다. `sk_message_check` 뒤에 호출해야 한다. 서버에서만 사용할 수 있다.
 
 ## 기타
 
